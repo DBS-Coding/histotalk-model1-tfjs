@@ -21,7 +21,8 @@ async function loadContent() {
         responses[intent.tag] = intent.responses;
     });
 
-    console.log("Content Loaded", labels, responses);
+    console.log("Labels: ", labels);
+    console.log("responses: ", responses);
 }
 
 function preprocess(text) {
@@ -54,23 +55,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         userInput.value = "";
     
         // Example Input Data (Shape: [1, 3], Type: float32)
-        const inputs = tf.tensor([[1, 45, 76]], [1, 3], 'float32');
-        console.log("inputs :", inputs);
+        // const inputs = tf.tensor([[1, 45, 76]], [1, 3], 'float32');
         // const inputName = model.inputNames[0];
         // console.log("input name: ", inputName);
         // console.log(model.inputNames); // Outputs an array of input names
         // const inputTensor = preprocess(text);
         // console.log("inputTensor :", inputTensor);
         // const inputs = { "inputs": inputTensor }; // Ensure input tensor matches the required shape
-// const prediction = model.execute(inputs); // Use model.execute()
-    
+        // const prediction = model.execute(inputs); // Use model.execute()
+        // console.log("inputs :", inputs);
+        //         {
+        //     "inputs": {
+        //         "kept": false,
+        //         "isDisposedInternal": false,
+        //         "shape": [
+        //             1,
+        //             3
+        //         ],
+        //         "dtype": "float32",
+        //         "size": 3,
+        //         "strides": [
+        //             3
+        //         ],
+        //         "dataId": {
+        //             "id": 34
+        //         },
+        //         "id": 34,
+        //         "rankType": "2"
+        //     }
+        // }
+
+        const inputTensor = preprocess(text); // shape: [1,3]
         try {
+            const prediction = await model.execute({ 'inputs:0': inputTensor });
+            const predictionData = await prediction.data();
+            console.log("Prediction output:", predictionData);
             // const prediction = await model.executeAsync(inputs); // Run model
             // const prediction = await model.executeAsync({ 'inputs' : inputs });
             // console.log(prediction);
             // Execute the model using the correct input name from SignatureDef
-            const prediction = await model.execute({ inputs: inputs }); // mungkin model.predict ?? losksi eror
-            console.log(prediction.arraySync());
+            // const prediction = await model.execute({ inputs: inputs }); // mungkin model.predict ?? losksi eror
+            // const prediction = await model.predict(inputs); // mungkin model.predict ?? losksi eror
+            // const prediction = await model.predict([[0, 0, 0]]); // mungkin model.predict ?? losksi eror
+            // console.log(prediction);
             // const predictionArray = await prediction.data(); // Extract array data
             // const outputIndex = predictionArray.indexOf(Math.max(...predictionArray)); // Find highest probability
     
