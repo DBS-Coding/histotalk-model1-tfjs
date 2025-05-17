@@ -1,5 +1,6 @@
-# Test TFJS
-- 
+# How To Use
+- Jalankan index.html pakai live server
+- Kode log ada di developer mode
 
 ## EROR
 - tfjsmodel_V3
@@ -16,9 +17,3 @@ script.js:84 Error during prediction: Error: Cannot compute the outputs [Identit
     at Generator.next (tf.min.js:17:2463)
     at u (tf.min.js:17:8324)
     at o (tf.min.js:17:8527)
-
-| Fitur 1 | Fitur 2 | Fitur 3 | Kelas      |
-|---------|---------|---------|------------|
-| Baik    | Tinggi  | Aman    | Positif    |
-| Buruk   | Rendah  | Berbahaya | Negatif  |
-| Baik    | Tinggi  | Aman    | Positif    |

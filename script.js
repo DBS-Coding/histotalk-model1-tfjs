@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const inputTensor = preprocess(text); // shape: [1,3]
         try {
+            // ??? Shape input tidak sesuai
             const prediction = await model.execute({ 'inputs:0': inputTensor });
             const predictionData = await prediction.data();
             console.log("Prediction output:", predictionData);
