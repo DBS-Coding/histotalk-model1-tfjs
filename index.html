@@ -1,25 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Soekarno Chatbot</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js"></script>
-  <!-- <script src="script.js" defer></script> -->
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    #chatbox { width: 100%; height: 300px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; }
-    #userInput { width: 80%; padding: 10px; }
-    #sendButton { padding: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Classification with TensorFlow.js</title>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+            background-color: #f9f9f9;
+        }
+        .loading {
+            display: none;
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+        .model-status {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
+    <h1>Text Classification Model</h1>
+    
+    <div class="model-status" id="modelStatus">Model status: Loading...</div>
+    
+    <div>
+        <textarea id="userInput" placeholder="Enter your text here..."></textarea>
+        <button onclick="predict()">Predict</button>
+        <div class="loading" id="loading">Processing prediction...</div>
+    </div>
+    
+    <div id="result"></div>
 
-<h1>Soekarno Chatbot</h1>
-
-<div id="chatbox"></div>
-
-<input type="text" id="userInput" placeholder="Tulis pertanyaan...">
-<button id="sendButton">Kirim</button>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

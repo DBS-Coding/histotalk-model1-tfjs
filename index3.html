@@ -1,339 +1,505 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Classification with TensorFlow.js</title>
-    <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>index3</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            display: none;
-            background-color: #f9f9f9;
-        }
-        .loading {
-            display: none;
-            margin-top: 15px;
-            font-style: italic;
-            color: #666;
-        }
-        .model-status {
-            margin-bottom: 20px;
-            color: #666;
-        }
-        pre {
-            background-color: #f5f5f5;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2.2em;
+      }
+      .upload-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border: 2px dashed #ddd;
+      }
+      .file-input {
+        margin: 10px 0;
+      }
+      .file-input label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #555;
+      }
+      input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .input-section {
+        margin-bottom: 30px;
+      }
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+      input[type="text"]:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+      }
+      button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 10px 5px;
+        transition: all 0.3s ease;
+        font-weight: bold;
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .status {
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .status.loading {
+        background: #fff3cd;
+        border: 2px solid #ffeaa7;
+        color: #856404;
+      }
+      .status.ready {
+        background: #d4edda;
+        border: 2px solid #c3e6cb;
+        color: #155724;
+      }
+      .status.error {
+        background: #f8d7da;
+        border: 2px solid #f5c6cb;
+        color: #721c24;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-left: 5px solid #667eea;
+      }
+      .prediction {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .confidence {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 15px;
+      }
+      .probabilities {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
+      .prob-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 8px 0;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 5px;
+      }
+      .prob-bar {
+        width: 200px;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-left: 10px;
+      }
+      .prob-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.5s ease;
+      }
+      .process-info {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        border-left: 5px solid #2196f3;
+      }
+      .process-step {
+        margin: 10px 0;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+      .step-title {
+        font-weight: bold;
+        color: #1976d2;
+      }
+      .code-preview {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        margin-top: 10px;
+        overflow-x: auto;
+      }
     </style>
-</head>
-<body>
-    <h1>Text Classification Model</h1>
-    
-    <div class="model-status" id="modelStatus">Model status: Loading...</div>
-    
-    <div>
-        <textarea id="userInput" placeholder="Enter your text here..."></textarea>
-        <button onclick="predict()">Predict</button>
-        <div class="loading" id="loading">Processing prediction...</div>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Klasifikasi Teks dengan Model Pre-trained</h1>
+
+      <div id="status" class="status loading">Memuat model...</div>
+
+      <div class="input-section">
+        <label for="textInput">Masukkan teks untuk klasifikasi:</label>
+        <input
+          type="text"
+          id="textInput"
+          placeholder="Contoh: Siapa nama anda?"
+          disabled
+        />
+        <button onclick="classifyText()" id="classifyBtn" disabled>
+          Klasifikasi
+        </button>
+        <button onclick="showProcessDetails()" id="processBtn" disabled>
+          Lihat Proses Detail
+        </button>
+      </div>
+
+      <div id="result" class="result" style="display: none">
+        <div class="prediction" id="prediction"></div>
+        <div class="confidence" id="confidence"></div>
+        <div class="probabilities" id="probabilities"></div>
+      </div>
+
+      <div id="processInfo" class="process-info" style="display: none">
+        <h3>🔍 Detail Proses Klasifikasi</h3>
+        <div id="processSteps"></div>
+      </div>
     </div>
-    
-    <div id="result"></div>
 
     <script>
-        // Global variables
-        let model;
-        let tokenizer;
-        let vocabSize;
-        let modelLoaded = false;
-        
-        // Load the model
-        async function loadModel() {
-            try {
-                // Load the model from your local server
-                model = await tf.loadGraphModel('http://127.0.0.1:5500/tfjs_model_v4/model.json');
-                
-                console.log("Model Loaded");
-                console.log("model.signature: ", model.signature);
-                console.log("Model inputs:", model.inputs);
-                console.log("Model outputs:", model.outputs);
-                console.log("model.inputNodes: ", model.inputNodes);
-                
-                // Inspect model graph to understand input/output structure
-                console.log("Model graph architecture:");
-                for (const key in model.artifacts.modelTopology.node) {
-                    const node = model.artifacts.modelTopology.node[key];
-                    if (node.name) {
-                        console.log(`Node name: ${node.name}, Op: ${node.op}`);
-                        if (node.input && node.input.length > 0) {
-                            console.log(`  Inputs: ${node.input.join(', ')}`);
-                        }
-                    }
-                }
-                
-                // Now load the metadata
-                await loadMetadata();
-                
-                // Update status
-                document.getElementById('modelStatus').innerText = 'Model status: Ready';
-                modelLoaded = true;
-            } catch (error) {
-                console.error("Error loading model:", error);
-                document.getElementById('modelStatus').innerText = 
-                  'Model status: Error loading model. See console for details.';
-            }
+      // Global variables
+      let model;
+      let tokenizer;
+      let metadata;
+      // let vocabSize = 76;
+      let isModelLoaded = false;
+      let maxLength = 3; // Default, akan diupdate dari metadata jika ada
+      // Konfigurasi
+      let vocabSize = 76; // karena 760 / 10 = 76, dari embedding
+      let inputLength = 3; // panjang input
+      let embeddingDim = 10;  
+
+      // Load the model
+      async function init() {
+        try {
+          document.getElementById("status").style.display = "block";
+          document.getElementById("status").className = "status loading";
+          document.getElementById("status").textContent =
+            "Loading model dan metadata...";
+
+          // Memanggil model tfjs
+          model = await tf.loadGraphModel(
+            "http://127.0.0.1:5500/tfjs_model_v4/model.json"
+          );
+
+          // Memanggil word_index
+          const word_indexjson = await fetch(
+            "http://127.0.0.1:5500/tfjs_model_v4/metadata.json"
+          );
+          metadata = await word_indexjson.json();
+          vocabSize = metadata.vocabulary_size;
+          tokenizer = {
+            word_index: metadata.word_index,
+          };
+
+          // Update maxLength jika ada di metadata
+          if (metadata.input_shape) {
+            // maxLength = metadata.input_shape;
+          }
+
+          isModelLoaded = true;
+
+          console.log("Model & Metadata Loaded Successfully");
+          console.log("Vocabulary size:", vocabSize);
+          console.log("Max length:", maxLength);
+
+          document.getElementById("status").className = "status ready";
+          document.getElementById("status").textContent =
+            "Model berhasil dimuat dan siap digunakan!";
+          document.getElementById("textInput").disabled = false;
+          document.getElementById("classifyBtn").disabled = false;
+          document.getElementById("processBtn").disabled = false;
+        } catch (error) {
+          console.error("Error loading model:", error);
+          document.getElementById("status").className = "status error";
+          document.getElementById("status").textContent =
+            "Error loading model: " + error.message;
         }
-        
-        // Load metadata separately
-        async function loadMetadata() {
-            try {
-                const response = await fetch('http://127.0.0.1:5500/tfjs_model_v4/metadata.json');
-                const metadata = await response.json();
-                vocabSize = metadata.vocabulary_size;
-                tokenizer = {
-                    word_index: metadata.word_index
-                };
-                console.log("Metadata loaded successfully");
-            } catch (error) {
-                console.error("Error loading metadata:", error);
-            }
+      }
+
+      // Tokenizing function berdasarkan word_index dari metadata
+      function tokenizeText(text) {
+        if (!tokenizer) {
+          throw new Error("Tokenizer not loaded");
         }
-        
-        // Preprocess text
-        function preprocessText(text) {
-            // Remove punctuation and convert to lowercase
-            return text.toLowerCase().replace(/[^\w\s]/gi, '');
+
+        const words = text.toLowerCase().trim().split(/\s+/);
+        const tokens = [];
+
+        for (const word of words) {
+          if (tokenizer.word_index && tokenizer.word_index[word]) {
+            tokens.push(tokenizer.word_index[word]);
+          } else {
+            tokens.push(1); // UNK token (biasanya index 1)
+          }
         }
-        
-        // Convert text to sequences
-        function textsToSequences(texts) {
-            return texts.map(text => {
-                const words = text.split(' ');
-                return words.map(word => {
-                    // Get the word index, or use 0 for unknown words
-                    return tokenizer.word_index[word] || 0;
-                });
-            });
+
+        return tokens;
+      }
+
+      // Pad sequences to ensure consistent input shape
+      function padSequence(sequences, maxlen = 3, padding = 'post', truncating = 'post') {
+          return sequences.map(seq => {
+              if (seq.length > maxlen) {
+                  // Truncate
+                  return truncating === 'pre'
+                      ? seq.slice(seq.length - maxlen)
+                      : seq.slice(0, maxlen);
+              }
+
+              // Pad with zeros
+              const padded = new Array(maxlen).fill(0);
+              const offset = padding === 'pre' ? maxlen - seq.length : 0;
+
+              for (let i = 0; i < seq.length; i++) {
+                  padded[offset + i] = seq[i];
+              }
+
+              return padded;
+          });
+      }
+
+      // Klasifikasi teks
+      async function classifyText() {
+        if (!isModelLoaded) {
+          alert("Model belum dimuat. Mohon tunggu...");
+          return;
         }
-        
-        // Pad sequences to ensure consistent input shape
-        function padSequences(sequences, maxlen = 3, padding = 'post', truncating = 'post') {
-            return sequences.map(seq => {
-                if (seq.length > maxlen) {
-                    // Truncate
-                    return truncating === 'pre' 
-                        ? seq.slice(seq.length - maxlen) 
-                        : seq.slice(0, maxlen);
-                }
-                
-                // Pad with zeros
-                const padded = new Array(maxlen).fill(0);
-                const offset = padding === 'pre' ? maxlen - seq.length : 0;
-                
-                for (let i = 0; i < seq.length; i++) {
-                    padded[offset + i] = seq[i];
-                }
-                
-                return padded;
-            });
+
+        const inputText = document.getElementById("textInput").value.trim();
+        if (!inputText) {
+          alert("Mohon masukkan teks yang ingin diklasifikasi");
+          return;
         }
-        
-        // Make prediction
-        async function predict() {
-            const resultDiv = document.getElementById('result');
-            const loadingDiv = document.getElementById('loading');
-            
-            if (!modelLoaded) {
-                alert('Model is still loading. Please wait a moment and try again.');
-                return;
-            }
-            
-            try {
-                loadingDiv.style.display = 'block';
-                resultDiv.style.display = 'none';
-                
-                const userInput = document.getElementById('userInput').value;
-                
-                if (!userInput) {
-                    alert('Please enter some text');
-                    loadingDiv.style.display = 'none';
-                    return;
-                }
-                
-                // Preprocess text
-                const processedText = preprocessText(userInput);
-                const textSequences = textsToSequences([processedText]);
-                
-                // Pad sequences to match model's expected input shape (?, 3)
-                const paddedSequences = padSequences(textSequences, 3);
-                console.log("Padded sequences:", paddedSequences);
-                
-                // Convert to tensor
-                const inputTensor = tf.tensor2d(paddedSequences);
-                console.log("Input tensor shape:", inputTensor.shape);
-                
-                // Try multiple approaches for LSTM model inference
-                let prediction;
-                try {
-                    // Approach 1: Try direct execute
-                    console.log("Trying model.execute with direct tensor input");
-                    prediction = model.execute(inputTensor);
-                } catch (error1) {
-                    console.log("Error with direct execute:", error1);
-                    
-                    try {
-                        // Approach 2: Try with a specific input name for LSTM models
-                        console.log("Trying with specific input names for LSTM model");
-                        // Common input names for LSTM models
-                        const possibleInputNames = [
-                            "input_1", 
-                            "serving_default_input_1:0",
-                            "serving_default_input_1", 
-                            "inputs:0",
-                            "inputs"
-                        ];
-                        
-                        // Try each possible input name
-                        for (const inputName of possibleInputNames) {
-                            try {
-                                console.log(`Trying with input name: ${inputName}`);
-                                const feedDict = {};
-                                feedDict[inputName] = inputTensor;
-                                prediction = model.execute(feedDict);
-                                console.log(`Success with input name: ${inputName}`);
-                                break; // Exit the loop if successful
-                            } catch (nameError) {
-                                console.log(`Failed with input name ${inputName}:`, nameError);
-                                // Continue to next name
-                            }
-                        }
-                        
-                        // If still no prediction, try executeAsync
-                        if (!prediction) {
-                            console.log("Trying executeAsync as fallback");
-                            prediction = await model.executeAsync(inputTensor);
-                        }
-                    } catch (error2) {
-                        console.log("All execute attempts failed, trying one last approach");
-                        
-                        // Approach 3: Try with the first input from model.inputs if available
-                        if (model.inputs && model.inputs.length > 0) {
-                            const firstInputName = model.inputs[0].name;
-                            console.log(`Last attempt with model's first input name: ${firstInputName}`);
-                            const feedDict = {};
-                            feedDict[firstInputName] = inputTensor;
-                            prediction = model.execute(feedDict);
-                        } else {
-                            // If all else fails, rethrow the original error
-                            throw error1;
-                        }
-                    }
-                }
-                
-                // Process prediction result
-                let predictionData;
-                if (Array.isArray(prediction)) {
-                    console.log("Prediction is an array with length:", prediction.length);
-                    predictionData = await prediction[0].data();
-                    // Clean up tensors
-                    prediction.forEach(tensor => tensor.dispose());
-                } else {
-                    console.log("Prediction is a single tensor with shape:", prediction.shape);
-                    predictionData = await prediction.data();
-                    prediction.dispose();
-                }
-                
-                // Format and display the result
-                const formattedResult = formatPredictionResult(predictionData);
-                resultDiv.innerHTML = formattedResult;
-                resultDiv.style.display = 'block';
-                
-                // Clean up tensors
-                inputTensor.dispose();
-                
-            } catch (error) {
-                console.error("Error during prediction:", error);
-                resultDiv.innerHTML = `
-                    <p>Error: ${error.message}</p>
-                    <p>This could be due to model incompatibility with the browser. Try these suggestions:</p>
-                    <ul>
-                        <li>Check the console for detailed error messages</li>
-                        <li>Ensure the model was converted with correct options for LSTM support</li>
-                        <li>Try reconverting the model with --control_flow_v2=true option</li>
-                    </ul>`;
-                resultDiv.style.display = 'block';
-            } finally {
-                loadingDiv.style.display = 'none';
-            }
+
+        try {
+          // Step 1: Tokenizing
+          const tokens = tokenizeText(inputText);
+          console.log("Tokens:", tokens);
+
+          // Step 2: Padding
+          const paddedTokens = padSequence(tokens, maxLength, 'pre');
+          console.log("Padded tokens:", paddedTokens[0]);
+
+          // Step 3: Convert ke tensor
+          const inputTensor = tf.tensor2d([paddedTokens], [1, maxLength]);
+          inputTensor.print(); // Tensor [[1, 2, 1],]
+
+          // Step 4: Prediksi menggunakan model yang sudah dimuat
+          const prediction = model.predict(inputTensor);
+          // const inputTensor = tf.tensor2d([paddedTokens], [1, maxLength]);
+          // const probabilities = await prediction.data();
+
+          // // Step 5: Interpretasi hasil
+          // const maxIndex = Array.from(probabilities).indexOf(Math.max(...probabilities));
+          // const confidence = (probabilities[maxIndex] * 100).toFixed(1);
+
+          // // Kategori sesuai dengan model Anda (sesuaikan dengan label asli)
+          // const categories = ['greeting', 'whoami', 'nationalism', 'revolution', 'independence',
+          //                  'unity', 'advice', 'international', 'struggle', 'goodbye'];
+
+          // // Tampilkan hasil
+          // displayResults(categories[maxIndex] || 'tidak_diketahui', confidence, probabilities, categories);
+
+          // // Cleanup
+          // inputTensor.dispose();
+          // prediction.dispose();
+        } catch (error) {
+          console.error("Error during classification:", error);
+          alert("Terjadi error saat klasifikasi: " + error.message);
         }
-        
-        // Format prediction result for display
-        function formatPredictionResult(predictionData) {
-            // Convert prediction data to array
-            const predArray = Array.from(predictionData);
-            
-            // This formatting depends on your specific model output
-            // Adjust based on whether it's classification, regression, etc.
-            let html = `<h3>Prediction Result:</h3>`;
-            
-            // For classification models, show probabilities
-            if (predArray.length > 1) {
-                // If there are multiple classes
-                html += `<p>Class probabilities:</p><ul>`;
-                predArray.forEach((prob, index) => {
-                    html += `<li>Class ${index}: ${(prob * 100).toFixed(2)}%</li>`;
-                });
-                html += `</ul>`;
-                
-                // Show predicted class
-                const predictedClass = predArray.indexOf(Math.max(...predArray));
-                html += `<p><strong>Predicted class: ${predictedClass}</strong></p>`;
-            } else {
-                // For regression or single value output
-                html += `<p>Prediction value: ${predArray[0].toFixed(4)}</p>`;
-            }
-            
-            // Add raw data for debugging
-            html += `<p>Raw prediction data:</p>
-                    <pre>${JSON.stringify(predArray, null, 2)}</pre>`;
-            
-            return html;
+      }
+
+      // Tampilkan hasil klasifikasi
+      function displayResults(
+        prediction,
+        confidence,
+        probabilities,
+        categories
+      ) {
+        document.getElementById(
+          "prediction"
+        ).textContent = `Klasifikasi: ${prediction.toUpperCase()}`;
+        document.getElementById(
+          "confidence"
+        ).textContent = `Tingkat kepercayaan: ${confidence}%`;
+
+        // Tampilkan probabilitas semua kelas
+        const probContainer = document.getElementById("probabilities");
+        probContainer.innerHTML = "<h4>Probabilitas Semua Kelas:</h4>";
+
+        for (
+          let i = 0;
+          i < Math.min(probabilities.length, categories.length);
+          i++
+        ) {
+          const prob = (probabilities[i] * 100).toFixed(1);
+          const probItem = document.createElement("div");
+          probItem.className = "prob-item";
+          probItem.innerHTML = `
+                    <span><strong>${categories[i]}:</strong> ${prob}%</span>
+                    <div class="prob-bar">
+                        <div class="prob-fill" style="width: ${prob}%"></div>
+                    </div>
+                `;
+          probContainer.appendChild(probItem);
         }
-        
-        // Load the model when the page loads
-        document.addEventListener('DOMContentLoaded', loadModel);
+
+        document.getElementById("result").style.display = "block";
+      }
+
+      // Tampilkan detail proses
+      function showProcessDetails() {
+        if (!isModelLoaded) {
+          alert("Model belum dimuat. Mohon tunggu...");
+          return;
+        }
+
+        const inputText = document.getElementById("textInput").value.trim();
+        if (!inputText) {
+          alert("Mohon masukkan teks terlebih dahulu");
+          return;
+        }
+
+        // Proses detail
+        const tokens = tokenizeText(inputText);
+        const paddedTokens = padSequence(tokens, maxLength);
+
+        const processSteps = document.getElementById("processSteps");
+        processSteps.innerHTML = `
+                <div class="process-step">
+                    <div class="step-title">1. Input Text:</div>
+                    "${inputText}"
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-title">2. Tokenizing (Text → Numbers):</div>
+                    Original words: ${inputText
+                      .split(" ")
+                      .map((w) => `"${w}"`)
+                      .join(", ")}
+                    <div class="code-preview">Tokens: [${tokens.join(
+                      ", "
+                    )}]</div>
+                    <small>Vocabulary size: ${vocabSize} words</small>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-title">3. Padding (Standardize Length):</div>
+                    Max length: ${maxLength}
+                    <div class="code-preview">Padded: [${paddedTokens.join(
+                      ", "
+                    )}]</div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-title">4. Model Input:</div>
+                    Shape: [1, ${maxLength}]
+                    <div class="code-preview">tensor2d([[${paddedTokens
+                      .slice(0, 10)
+                      .join(", ")}${
+          paddedTokens.length > 10 ? ", ..." : ""
+        }]])</div>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-title">5. Model Processing:</div>
+                    • Embedding layer: tokens → dense vectors
+                    • Neural network: process embeddings
+                    • Output layer: class probabilities
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-title">6. Prediction Output:</div>
+                    Returns probability distribution over all classes
+                    <div class="code-preview">Shape: [1, num_classes]</div>
+                </div>
+            `;
+
+        document.getElementById("processInfo").style.display = "block";
+      }
+
+      // Event listener untuk Enter key
+      document
+        .getElementById("textInput")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter" && !this.disabled) {
+            classifyText();
+          }
+        });
+
+      // Inisialisasi - langsung load model saat halaman dimuat
+      window.addEventListener("load", async () => {
+        console.log("Application loaded. Loading model...");
+        await init();
+      });
     </script>
-</body>
+  </body>
 </html>

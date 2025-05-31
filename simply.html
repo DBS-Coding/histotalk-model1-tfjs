@@ -1,0 +1,124 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+    <title>Simply</title>
+  </head>
+  <body>
+    <script>
+      const responses = {};
+      let classLabels;
+
+      // Pad sequences to ensure consistent input shape
+      function padSequences(
+        sequences,
+        maxlen = 3,
+        padding = "post",
+        truncating = "post"
+      ) {
+        return sequences.map((seq) => {
+          if (seq.length > maxlen) {
+            // Truncate
+            return truncating === "pre"
+              ? seq.slice(seq.length - maxlen)
+              : seq.slice(0, maxlen);
+          }
+
+          // Pad with zeros
+          const padded = new Array(maxlen).fill(0);
+          const offset = padding === "pre" ? maxlen - seq.length : 0;
+
+          for (let i = 0; i < seq.length; i++) {
+            padded[offset + i] = seq[i];
+          }
+
+          return padded;
+        });
+      }
+
+      async function init() {
+        let model = await tf.loadGraphModel(
+          "http://127.0.0.1:5500/tfjs_model_v4/model.json"
+        );
+
+        // Memanggil word_index
+        const word_indexjson = await fetch(
+          "http://127.0.0.1:5500/tfjs_model_v4/metadata.json"
+        );
+        let metadata = await word_indexjson.json();
+        let vocabSize = metadata.vocabulary_size;
+        let tokenizer = {
+          word_index: metadata.word_index,
+        };
+
+        const response = await fetch("http://127.0.0.1:5500/content.json");
+        const data = await response.json();
+
+        let labels = new Set();
+        data.intents.forEach((intent) => {
+          responses[intent.tag] = intent.responses;
+          labels.add(intent.tag);
+        });
+        classLabels = [...labels];
+        console.log("classLabels Loaded: ", classLabels);
+
+        // Kamu: kamu siapa
+        // [[0 7 1]]
+        const inputText = "kamu siapa";
+        console.log("Input Text: ", inputText);
+
+        // Preprocess input
+        const preprocess = inputText.toLowerCase().replace(/[^\w\s]/gi, "");
+        const textSequences = [preprocess].map((text) => {
+          const words = text.split(" ");
+          return words.map((word) => {
+            // Get the word index, or use 0 for unknown words
+            return tokenizer.word_index[word] || 0;
+          });
+        });
+        console.log("Preprocess Text Sequences: ", textSequences);
+
+        // Pad sequences to match model's expected input shape (-1 batchSize, 3)
+        const paddedSequences = padSequences(textSequences, 3, "pre");
+        console.log("Padded Sequences: ", paddedSequences[0]);
+
+        const inputTensor = tf.tensor2d(paddedSequences, [1, 3]);
+        // const result = model.execute({ Identity: inputTensor });
+        const result = model.predict({ Identity: inputTensor });
+
+        const probabilities = result.softmax();
+        const outputData = await probabilities.data();
+        const outputArray = Array.from(outputData);
+
+        console.log("=== DEBUG INFO ===");
+        console.log("Jumlah output yang diprediksi:", outputArray.length);
+        console.log("Expected classes: 10");
+
+        // print array prediksi untuk setiap target kelas
+        console.log("Array prediksi probabilitas untuk setiap kelas:");
+        console.log(outputArray);
+
+        // print prediksi per kelas
+        console.log("\nPrediksi per kelas:");
+        outputArray.forEach((prob, index) => {
+          const className = classLabels[index] || `Class_${index}`;
+          console.log(`${className}: ${prob.toFixed(4)}`);
+        });
+
+        // // (opsional) ambil nilai tertinggi:
+        // const prediction = result.argMax(-1);
+        // prediction.print(); // akan menampilkan index kelas prediksi (0-9)
+
+        // // Menggunakan softmax untuk mendapatkan probabilitas setiap kelas
+        // const probabilities = result.softmax();
+
+        // // Ambil nilai tertinggi dan probabilitasnya
+        // const predictionIndex = probabilities.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
+        // const predictionValue = probabilities.max().dataSync()[0]; // Probabilitas tertinggi
+
+        // console.log(`Prediksi kelas: ${predictionIndex}`);
+        // console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+      }
+      init();
+    </script>
+  </body>
+</html>
