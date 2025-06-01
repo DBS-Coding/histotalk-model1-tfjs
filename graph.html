@@ -1,7 +1,7 @@
 <html>
   <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
-    <title>Simply</title>
+    <title>Graph</title>
   </head>
   <body>
     <script>
@@ -37,18 +37,18 @@
 
       async function init() {
         let model = await tf.loadGraphModel(
-          "http://127.0.0.1:5500/tfjs_model_v4/model.json"
+          "http://127.0.0.1:5500/tfjs_saved_model/model.json"
         );
+
+        // Lihat input dan output
+        // console.log("Inputs:", model.inputs);
+        // console.log("Outputs:", model.outputs);
 
         // Memanggil word_index
         const word_indexjson = await fetch(
-          "http://127.0.0.1:5500/tfjs_model_v4/metadata.json"
+          "http://127.0.0.1:5500/tfjs_saved_model/word_index.json"
         );
-        let metadata = await word_indexjson.json();
-        let vocabSize = metadata.vocabulary_size;
-        let tokenizer = {
-          word_index: metadata.word_index,
-        };
+        let word_index = await word_indexjson.json();
 
         const response = await fetch("http://127.0.0.1:5500/content.json");
         const data = await response.json();
@@ -60,10 +60,11 @@
         });
         classLabels = [...labels];
         console.log("classLabels Loaded: ", classLabels);
+        console.log("Responses Loaded: ", responses);
 
-        // Kamu: kamu siapa
-        // [[0 7 1]]
-        const inputText = "kamu siapa";
+        // anda siapa [[0 3 2]] whoami: 0.94
+        // Kamu: sampai jumpa (10) goodbye: 0.79 [[ 0 15 71]]
+        const inputText = "anda siapa";
         console.log("Input Text: ", inputText);
 
         // Preprocess input
@@ -72,7 +73,7 @@
           const words = text.split(" ");
           return words.map((word) => {
             // Get the word index, or use 0 for unknown words
-            return tokenizer.word_index[word] || 0;
+            return word_index[word] || 0;
           });
         });
         console.log("Preprocess Text Sequences: ", textSequences);
@@ -82,7 +83,6 @@
         console.log("Padded Sequences: ", paddedSequences[0]);
 
         const inputTensor = tf.tensor2d(paddedSequences, [1, 3]);
-        // const result = model.execute({ Identity: inputTensor });
         const result = model.predict({ Identity: inputTensor });
 
         const probabilities = result.softmax();
@@ -105,19 +105,34 @@
         });
 
         // // (opsional) ambil nilai tertinggi:
-        // const prediction = result.argMax(-1);
-        // prediction.print(); // akan menampilkan index kelas prediksi (0-9)
+        const prediction = result.argMax(-1);
+        prediction.print(); // akan menampilkan index kelas prediksi (0-9)
 
-        // // Menggunakan softmax untuk mendapatkan probabilitas setiap kelas
-        // const probabilities = result.softmax();
+        // Menggunakan softmax untuk mendapatkan probabilitas setiap kelas
+        const probabilitas = result.softmax();
 
-        // // Ambil nilai tertinggi dan probabilitasnya
-        // const predictionIndex = probabilities.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
-        // const predictionValue = probabilities.max().dataSync()[0]; // Probabilitas tertinggi
+        // Ambil nilai tertinggi dan probabilitasnya
+        const predictionIndex = probabilitas.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
+        const predictionValue = probabilitas.max().dataSync()[0]; // Probabilitas tertinggi
 
-        // console.log(`Prediksi kelas: ${predictionIndex}`);
-        // console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+        console.log(`Prediksi kelas: ${predictionIndex}`);
+        console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+
+        // Ambil indeks prediksi dari model
+        const predictedTag = classLabels[predictionIndex]; // nama tag sesuai indeks
+
+        // Ambil daftar respons untuk tag tersebut
+        const possibleResponses = responses[predictedTag] || [];
+
+        // Pilih salah satu response secara acak
+        const randomResponse =
+          possibleResponses[
+            Math.floor(Math.random() * possibleResponses.length)
+          ];
+
+        console.log(`Respon: ${randomResponse}`);
       }
+      
       init();
     </script>
   </body>

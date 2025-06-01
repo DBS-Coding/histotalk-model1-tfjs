@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Predict</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+  </head>
+  <body>
+    <script src="predict.js"></script>
+    <script>
+      (async () => {
+        const result = await predictIntent("anda siapa");
+        console.log(result);
+      })();
+    </script>
+  </body>
+</html>

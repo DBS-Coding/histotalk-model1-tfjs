@@ -2,7 +2,30 @@
 - Jalankan index.html pakai live server
 - Kode log ada di developer mode
 
-## EROR
+## Using predict.js
+- pakai file `predict.js` dan folder `tfjs_saved_model`
+- contoh pemakaian di `predict.html`
+- contoh output:
+```
+{
+  "probabilities": [
+    { "label": "greeting", "confidence": 0.0032 },
+    { "label": "whoami", "confidence": 0.9365 },
+    ...
+  ],
+  "predictedClass": "whoami",
+  "confidence": 0.9365,
+  "response": "Aku Soekarno, Proklamator Indonesia!"
+}
+```
+
+## Issue
+Anomali Perbedaan Model latihan-tfjs dan model1:
+- latihan bisa model.predict(input) tanpa perlu inisiasi tambahan, sedangkan model1 perlu model.predict({ Identity: inputTensor });
+- latihan dan model1 sama-sama tidak punya DType dan Shape OutputLayer
+- model1 hanya punya 3 neuron probalitas output (mungkin ini mengikuti input)
+
+## EROR LOG
 - tfjsmodel_V3
     - tfjs version 2.18.0
     - tfjs version: v4.22.0

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TFJS Output Layer Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+</head>
+<body>
+  <h2>TFJS Output Test</h2>
+  <pre id="output"></pre>
+
+  <script>
+    async function runModel() {
+      const outputBox = document.getElementById('output');
+
+      // Load GraphModel (pastikan path sesuai dengan lokasi model.json kamu)
+      const model = await tf.loadGraphModel('tfjs_saved_model/model.json');
+      console.log('Inputs:', model.inputs);
+      console.log('Outputs:', model.outputs);
+
+      // // Buat dummy input tensor (misalnya input shape [1, 3], sesuai model kamu)
+      const inputTensor = tf.tensor2d([[1, 2, 3]], [1, 3], 'int32');
+
+      // // Lakukan prediksi
+      const result = await model.predict(inputTensor);
+      // const result = await model.executeAsync({ x: inputTensor }, 'Identity:0')
+
+      // // Jika result adalah tensor tunggal
+      // const data = await result.data();
+      // outputBox.textContent = `Output Shape: [${result.shape}]\nOutput Data:\n[${Array.from(data).join(", ")}]`;
+
+      // // Bebaskan memori
+      // inputTensor.dispose();
+      // result.dispose();
+    }
+    runModel();
+  </script>
+</body>
+</html>
