@@ -5,8 +5,17 @@
 ## Using predict.js
 - pakai file `predict.js` dan folder `tfjs_saved_model`
 - contoh pemakaian di `predict.html`
-- contoh output:
+```html
+<script src="predict.js"></script>
+    <script>
+      (async () => {
+        const result = await predictIntent("anda siapa");
+        console.log(result);
+      })();
+    </script>
 ```
+- contoh output:
+```json
 {
   "probabilities": [
     { "label": "greeting", "confidence": 0.0032 },
