@@ -38,11 +38,13 @@
       async function init() {
         let model = await tf.loadGraphModel(
           "http://127.0.0.1:5500/tfjs_saved_model/model.json"
+          // "http://127.0.0.1:5500/model_architecture.json"
+          // "http://127.0.0.1:5500/tfjs_model_h5/model.json"
         );
+        console.log("Inputs:", model.inputs);
+        console.log("Outputs:", model.outputs);
 
         // Lihat input dan output
-        // console.log("Inputs:", model.inputs);
-        // console.log("Outputs:", model.outputs);
 
         // Memanggil word_index
         const word_indexjson = await fetch(
@@ -64,7 +66,7 @@
 
         // anda siapa [[0 3 2]] whoami: 0.94
         // Kamu: sampai jumpa (10) goodbye: 0.79 [[ 0 15 71]]
-        const inputText = "anda siapa";
+        const inputText = "sampai jumpa";
         console.log("Input Text: ", inputText);
 
         // Preprocess input
