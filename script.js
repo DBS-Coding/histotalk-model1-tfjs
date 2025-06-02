@@ -1,28 +1,40 @@
 // Global variables
 let model;
-let tokenizer;
-let vocabSize;
+let word_index;
+const responses = {};
+let classLabels;
+let maxLen;
+let prediction;
 let isModelLoaded = false;
-let maxlen = 3;
-const padding = 'post';
-const truncating = 'post';
 
-// Load the model
+// Load the model, word_index, and classLabels
 async function init() {
+    console.log('--------- LOAD Model, Metadata, & ClassLabels ----------');
     // Memanggil model tfjs
-    model = await tf.loadGraphModel('http://127.0.0.1:5500/tfjs_model_v4/model.json');
+    model = await tf.loadGraphModel(`${window.location.origin}/tfjs_saved_model/model.json`);
+    maxLen = model.inputs[0].shape[1];
+    console.log("Input Model: ", model.inputs);
+    console.log("Outputs Model: ", model.outputs);
     isModelLoaded = true;
 
-    //Memanggil word_index
-    const word_indexjson = await fetch('http://127.0.0.1:5500/tfjs_model_v4/metadata.json');
-    metadata = await word_indexjson.json();
-    vocabSize = metadata.vocabulary_size;
-    tokenizer = {
-        word_index: metadata.word_index
-    };
+    // Memanggil word_index
+    const word_indexjson = await fetch(`${window.location.origin}/tfjs_saved_model/word_index.json`);
+    word_index = await word_indexjson.json();
 
     console.log('Model & Metadata Loaded Successfully');
     document.getElementById('modelStatus').innerText = 'Model status: Ready';
+
+    const response = await fetch(`${window.location.origin}/content.json`);
+    const data = await response.json();
+
+    let labels = new Set();
+    data.intents.forEach((intent) => {
+        responses[intent.tag] = intent.responses;
+        labels.add(intent.tag);
+    });
+    classLabels = [...labels];
+    console.log("classLabels Loaded: ", classLabels);
+    console.log("Responses Loaded: ", responses);
 }
 
 // Preprocess text
@@ -37,13 +49,13 @@ function textsToSequences(texts) {
         const words = text.split(' ');
         return words.map(word => {
             // Get the word index, or use 0 for unknown words
-            return tokenizer.word_index[word] || 0;
+            return word_index[word] || 0;
         });
     });
 }
 
 // Pad sequences to ensure consistent input shape
-function padSequences(sequences, maxlen = 3, padding = 'post', truncating = 'post') {
+function padSequences(sequences, maxlen, padding = 'post', truncating = 'post') {
     return sequences.map(seq => {
         if (seq.length > maxlen) {
             // Truncate
@@ -64,7 +76,7 @@ function padSequences(sequences, maxlen = 3, padding = 'post', truncating = 'pos
     });
 }
 
-// Make prediction
+// Make prediction (trigger by button click)
 async function predict() {
     const resultDiv = document.getElementById('result');
     const loadingDiv = document.getElementById('loading');
@@ -73,217 +85,100 @@ async function predict() {
         alert('Model is still loading. Please wait a moment and try again.');
         return;
     }
+    console.log('\n\n------------------ PREDICT -------------------');
 
-    try {
-        loadingDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
+    loadingDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
 
-        const userInput = document.getElementById('userInput').value;
+    const userInput = document.getElementById('userInput').value;
 
-        if (!userInput) {
-            alert('Please enter some text');
-            loadingDiv.style.display = 'none';
-            return;
-        }
-
-        // Preprocess text
-        const processedText = preprocessText(userInput);
-        const textSequences = textsToSequences([processedText]);
-
-        // Pad sequences to match model's expected input shape (?, 3)
-        const paddedSequences = padSequences(textSequences, 3, "pre");
-        console.log("Padded sequences:", paddedSequences[0]);
-
-        // Convert to tensor
-        console.log(paddedSequences);
-        const inputTensor = tf.tensor2d(paddedSequences);
-        console.log("Input tensor shape:", inputTensor.shape);
-
-        // Try multiple approaches for LSTM model inference
-        let prediction;
-        try {
-            // Approach 1: Try direct execute
-            console.log("Trying model.execute with direct tensor input");
-            // prediction = model.executeAsync(inputTensor);
-            // console.log(inputTensor);
-            prediction = model.execute({ Identity: inputTensor });;
-            console.log("Success with direct execute");
-            // prediction = await prediction;
-            console.log("Prediction:", prediction.print());
-        } catch (error1) {
-            console.log("Error with direct execute:", error1);
-
-            try {
-                // Approach 2: Try with a specific input name for LSTM models
-                console.log("Trying with specific input names for LSTM model");
-                // Common input names for LSTM models
-                const possibleInputNames = [
-                    "input_1",
-                    "serving_default_input_1:0",
-                    "serving_default_input_1",
-                    "inputs:0",
-                    "inputs"
-                ];
-
-                // Try each possible input name
-                for (const inputName of possibleInputNames) {
-                    try {
-                        console.log(`Trying with input name: ${inputName}`);
-                        const feedDict = {};
-                        feedDict[inputName] = inputTensor;
-                        prediction = model.execute(feedDict);
-                        console.log(`Success with input name: ${inputName}`);
-                        break; // Exit the loop if successful
-                    } catch (nameError) {
-                        console.log(`Failed with input name ${inputName}:`, nameError);
-                        // Continue to next name
-                    }
-                }
-
-                // If still no prediction, try executeAsync
-                if (!prediction) {
-                    console.log("Trying executeAsync as fallback");
-                    prediction = await model.executeAsync(inputTensor);
-                }
-            } catch (error2) {
-                console.log("All execute attempts failed, trying one last approach");
-
-                // Approach 3: Try with the first input from model.inputs if available
-                if (model.inputs && model.inputs.length > 0) {
-                    const firstInputName = model.inputs[0].name;
-                    console.log(`Last attempt with model's first input name: ${firstInputName}`);
-                    const feedDict = {};
-                    feedDict[firstInputName] = inputTensor;
-                    prediction = model.execute(feedDict);
-                } else {
-                    // If all else fails, rethrow the original error
-                    throw error1;
-                }
-            }
-        }
-
-        // Process prediction result
-        let predictionData;
-        if (Array.isArray(prediction)) {
-            console.log("Prediction is an array with length:", prediction.length);
-            predictionData = await prediction[0].data();
-            // Clean up tensors
-            prediction.forEach(tensor => tensor.dispose());
-        } else {
-            console.log("Prediction is a single tensor with shape:", prediction.shape);
-            predictionData = await prediction.data;
-            console.log(predictionData)
-            // prediction.dispose();
-        }
-
-        // Format and display the result
-        const formattedResult = formatPredictionResult(predictionData);
-        resultDiv.innerHTML = formattedResult;
-        resultDiv.style.display = 'block';
-
-        // Clean up tensors
-        inputTensor.dispose();
-
-    } catch (error) {
-        console.error("Error during prediction:", error);
-        resultDiv.innerHTML = `
-                    <p>Error: ${error.message}</p>
-                    <p>This could be due to model incompatibility with the browser. Try these suggestions:</p>
-                    <ul>
-                        <li>Check the console for detailed error messages</li>
-                        <li>Ensure the model was converted with correct options for LSTM support</li>
-                        <li>Try reconverting the model with --control_flow_v2=true option</li>
-                    </ul>`;
-        resultDiv.style.display = 'block';
-    } finally {
+    if (!userInput) {
+        alert('Please enter some text');
         loadingDiv.style.display = 'none';
+        return;
     }
-}
 
-// Format prediction result for display
-function formatPredictionResult(predictionData) {
-    // Convert prediction data to array
+    // anda siapa [[0 3 2]] whoami: 0.94
+    // const userInput = "anda siapa";
+    console.log(`Input User: "${userInput}"`);
+
+    // Preprocess text
+    const processedText = preprocessText(userInput);
+    const textSequences = textsToSequences([processedText]);
+    const paddedSequences = padSequences(textSequences, maxLen, "pre");
+
+    console.log("Padded Sequences: ", paddedSequences);
+
+    // Convert to tensor
+    const inputTensor = tf.tensor2d(paddedSequences, [1, maxLen]);
+
+
+    // Make prediction
+    const prediction = model.predict({ Identity: inputTensor });
+
+    // process prediction
+    const probabilities = prediction.softmax();
+    const predictionData = await probabilities.data();
     const predArray = Array.from(predictionData);
 
-    // This formatting depends on your specific model output
-    // Adjust based on whether it's classification, regression, etc.
-    let html = `<h3>Prediction Result:</h3>`;
+    console.log("\n=== DEBUG INFO ===");
+    console.log("Jumlah output yang diprediksi:", predArray.length, "(Expected classes: 10)");
 
-    // For classification models, show probabilities
-    if (predArray.length > 1) {
-        // If there are multiple classes
-        html += `<p>Class probabilities:</p><ul>`;
-        predArray.forEach((prob, index) => {
-            html += `<li>Class ${index}: ${(prob * 100).toFixed(2)}%</li>`;
-        });
-        html += `</ul>`;
+    // print array prediksi untuk setiap target kelas
+    console.log("Array prediksi probabilitas untuk setiap kelas:", predArray);
 
-        // Show predicted class
-        const predictedClass = predArray.indexOf(Math.max(...predArray));
-        html += `<p><strong>Predicted class: ${predictedClass}</strong></p>`;
-    } else {
-        // For regression or single value output
-        html += `<p>Prediction value: ${predArray[0].toFixed(4)}</p>`;
-    }
+    // result in HTML
+    let html = `<h3>Prediction Result:</h3>
+    <p>Input: "${userInput}"</p><p>Class probabilities:</p><ul>`;
+
+    // print prediksi per kelas
+    console.log("\nPrediksi per kelas:");
+    predArray.forEach((prob, index) => {
+        const className = classLabels[index] || `Class_${index}`;
+        html += `<li>[${index}] ${className}: ${(prob * 100).toFixed(2)}%</li>`;
+        console.log(`[${index}] ${className}: ${prob.toFixed(4)}`);
+    });
+    html += `</ul>`;
+
+    // // (opsional) ambil nilai tertinggi:
+    const maxPrediction = prediction.argMax(-1);
+    maxPrediction.print(); // akan menampilkan index kelas prediksi (0-9)
+
+    // Ambil nilai tertinggi dan probabilitasnya
+    const predictionIndex = probabilities.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
+    const predictionValue = probabilities.max().dataSync()[0]; // Probabilitas tertinggi
+
+    html += `<p><strong>Predicted class: [${predictionIndex}] ${classLabels[predictionIndex]}</strong></p>`;
+
+    console.log(`Prediksi kelas: [${predictionIndex}] ${classLabels[predictionIndex]}`);
+    console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+
+    // Ambil indeks prediksi dari model
+    const predictedTag = classLabels[predictionIndex]; // nama tag sesuai indeks
+
+    // Ambil daftar respons untuk tag tersebut
+    const possibleResponses = responses[predictedTag] || [];
+
+    // Pilih salah satu response secara acak
+    const randomResponse =
+        possibleResponses[
+        Math.floor(Math.random() * possibleResponses.length)
+        ];
+
+    html += `<p><strong>Response</strong>: ${randomResponse}</p>`
+    console.log(`Respon: ${randomResponse}`);
 
     // Add raw data for debugging
-    html += `<p>Raw prediction data:</p>
-                    <pre>${JSON.stringify(predArray, null, 2)}</pre>`;
+    html += `<p>Raw prediction data:</p><pre>${JSON.stringify(predArray, null, 2)}</pre>`;
 
-    return html;
+    // Format and display the result
+    const formattedResult = html;
+    resultDiv.innerHTML = formattedResult;
+    resultDiv.style.display = 'block';
+
+    // Clean up tensors
+    // inputTensor.dispose();
 }
 
 // Load the model when the page loads
 document.addEventListener('DOMContentLoaded', init);
-
-
-
-
-    // try {
-    //     // Load the model from your local server
-    //     model = await tf.loadGraphModel('http://127.0.0.1:5500/tfjs_model_v4/model.json');
-
-    //     console.log("Model Loaded");
-    //     console.log("model.signature: ", model.signature);
-    //     console.log("Model inputs:", model.inputs);
-    //     console.log("Model outputs:", model.outputs);
-    //     console.log("model.inputNodes: ", model.inputNodes);
-
-    //     // Inspect model graph to understand input/output structure
-    //     console.log("Model graph architecture:");
-    //     for (const key in model.artifacts.modelTopology.node) {
-    //         const node = model.artifacts.modelTopology.node[key];
-    //         if (node.name) {
-    //             console.log(`Node name: ${node.name}, Op: ${node.op}`);
-    //             if (node.input && node.input.length > 0) {
-    //                 console.log(`  Inputs: ${node.input.join(', ')}`);
-    //             }
-    //         }
-    //     }
-
-    //     // Now load the metadata
-    //     await loadMetadata();
-
-    //     // Update status
-    //     document.getElementById('modelStatus').innerText = 'Model status: Ready';
-    //     modelLoaded = true;
-    // } catch (error) {
-    //     console.error("Error loading model:", error);
-    //     document.getElementById('modelStatus').innerText =
-    //         'Model status: Error loading model. See console for details.';
-    // }
-
-// Load metadata separately
-// async function loadMetadata() {
-//     try {
-//         const response = await fetch('http://127.0.0.1:5500/tfjs_model_v4/metadata.json');
-//         const metadata = await response.json();
-//         vocabSize = metadata.vocabulary_size;
-//         tokenizer = {
-//             word_index: metadata.word_index
-//         };
-//         console.log("Metadata loaded successfully");
-//     } catch (error) {
-//         console.error("Error loading metadata:", error);
-//     }
-// }

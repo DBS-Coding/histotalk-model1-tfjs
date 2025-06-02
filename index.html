@@ -13,7 +13,7 @@
             margin: 0 auto;
             padding: 20px;
         }
-        textarea {
+        #userInput {
             width: 100%;
             height: 100px;
             margin-bottom: 15px;
@@ -41,7 +41,7 @@
             display: none;
             background-color: #f9f9f9;
         }
-        .loading {
+        #loading {
             display: none;
             margin-top: 15px;
             font-style: italic;
@@ -63,12 +63,13 @@
     <h1>Text Classification Model</h1>
     
     <div class="model-status" id="modelStatus">Model status: Loading...</div>
+    <p>contoh pilihan:  "anda siapa" <pre>Matrix: [[0 3 2]], Tag: whoami [0.94]</pre></p>
     
-    <div>
-        <textarea id="userInput" placeholder="Enter your text here..."></textarea>
-        <button onclick="predict()">Predict</button>
-        <div class="loading" id="loading">Processing prediction...</div>
-    </div>
+    <form onsubmit="event.preventDefault(); predict();">
+        <input id="userInput" placeholder="Enter your text here..."></input>
+        <button type="submit">Predict</button>
+        <div id="loading"></div>
+    </form>
     
     <div id="result"></div>
 

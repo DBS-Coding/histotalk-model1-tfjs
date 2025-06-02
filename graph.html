@@ -38,8 +38,6 @@
       async function init() {
         let model = await tf.loadGraphModel(
           "http://127.0.0.1:5500/tfjs_saved_model/model.json"
-          // "http://127.0.0.1:5500/model_architecture.json"
-          // "http://127.0.0.1:5500/tfjs_model_h5/model.json"
         );
         console.log("Inputs:", model.inputs);
         console.log("Outputs:", model.outputs);
