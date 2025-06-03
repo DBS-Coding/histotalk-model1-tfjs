@@ -7,24 +7,28 @@ let maxLen;
 let prediction;
 let isModelLoaded = false;
 
+const baseUrl = window.location.protocol === 'https:'
+  ? 'https://dbs-coding.github.io/histotalk-model1-tfjs'
+  : 'http://localhost:5500';
+
 // Load the model, word_index, and classLabels
 async function init() {
     console.log('--------- LOAD Model, Metadata, & ClassLabels ----------');
     // Memanggil model tfjs
-    model = await tf.loadGraphModel(`${window.location.origin}${window.location.pathname}/tfjs_saved_model/model.json`);
+    model = await tf.loadGraphModel(`${baseUrl}/tfjs_saved_model/model.json`);
     maxLen = model.inputs[0].shape[1];
     console.log("Input Model: ", model.inputs);
     console.log("Outputs Model: ", model.outputs);
     isModelLoaded = true;
 
     // Memanggil word_index
-    const word_indexjson = await fetch(`${window.location.origin}${window.location.pathname}/tfjs_saved_model/word_index.json`);
+    const word_indexjson = await fetch(`${baseUrl}/tfjs_saved_model/word_index.json`);
     word_index = await word_indexjson.json();
 
     console.log('Model & Metadata Loaded Successfully');
     document.getElementById('modelStatus').innerText = 'Model status: Ready';
 
-    const response = await fetch(`${window.location.origin}${window.location.pathname}/content.json`);
+    const response = await fetch(`${baseUrl}/content.json`);
     const data = await response.json();
 
     let labels = new Set();
