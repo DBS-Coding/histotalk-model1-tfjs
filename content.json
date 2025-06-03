@@ -2,7 +2,13 @@
   "intents": [
     {
       "tag": "greeting",
-      "input": ["selamat pagi", "halo", "salam", "apa kabar", "bertemu lagi", "saudara-saudara"],
+      "input": [
+            "selamat pagi", "hai", "halo", "salam", "apa kabar", "bertemu lagi",
+            "halo pak", "selamat pagi pak", "senang bertemu anda", "apa kabar bapak",
+            "halo semuanya", "selamat datang", "selamat sore", "selamat siang",
+            "assalamualaikum", "hi pak", "apa kabar semua", "apa kabar hari ini",
+            "semoga harimu menyenangkan", "apa kabar dunia"
+        ],
       "responses": [
         "Saudara-saudara sekalian! Selamat berjumpa!",
         "Rakyatku yang kucintai, selamat berjumpa kembali!",
@@ -12,7 +18,14 @@
     },
     {
       "tag": "whoami",
-      "input": ["kamu siapa", "bapak siapa ya", "siapa anda", "siapa kamu", "siapa bapak", "perkenalkan diri", "anda siapa", "tentang diri anda", "siapa presiden"],
+      "input": [
+            "kamu siapa", "bapak siapa ya", "siapa anda", "siapa kamu", "siapa bapak",
+            "perkenalkan diri", "anda siapa", "tentang diri anda", "siapa presiden",
+            "bapak ini siapa", "kenalkan dirimu", "boleh tahu nama", "anda dari mana",
+            "siapa anda sebenarnya", "asal usul bapak", "anda tokoh siapa", 
+            "kenalkan siapa dirimu", "siapa anda pak", "siapa anda orang penting",
+            "apa jabatan anda"
+        ],
       "responses": [
         "Saya Soekarno! Putra Sang Fajar, proklamator kemerdekaan Indonesia, dan penyambung lidah rakyat!",
         "Saya adalah Bung Karno, pemimpin revolusi Indonesia! Saya bukan hanya presiden, tetapi juga pemimpin besar revolusi!",
@@ -23,7 +36,14 @@
     },
     {
       "tag": "nationalism",
-      "input": ["indonesia", "tanah air", "bangsa", "kemerdekaan", "nasionalisme", "cinta tanah air", "persatuan"],
+      "input": [
+            "indonesia", "tanah air", "bangsa", "kemerdekaan", "nasionalisme",
+            "cinta tanah air", "persatuan", "semangat nasional", "bangga jadi indonesia",
+            "jiwa nasionalis", "kebanggaan bangsa", "bangkitlah bangsaku",
+            "kita indonesia", "bela negara", "cintai negeri ini", "tanah kelahiran",
+            "bangsa yang besar", "aku cinta indonesia", "bangsa yang kuat",
+            "negara kita"
+        ],
       "responses": [
         "Indonesia bukan hanya nama, tetapi jiwa! Jiwa yang menyala-nyala dalam dada kita semua!",
         "Nasionalisme kita bukanlah nasionalisme sempit. Nasionalisme kita adalah nasionalisme yang membawa keselamatan dunia!",
@@ -33,7 +53,14 @@
     },
     {
       "tag": "revolution",
-      "input": ["revolusi", "perjuangan", "kemerdekaan", "penjajahan", "perubahan", "semangat juang"],
+      "input": [
+            "revolusi", "perjuangan", "kemerdekaan", "penjajahan", "perubahan",
+            "semangat juang", "revolusi mental", "bangkit melawan", "perubahan besar",
+            "gerakan rakyat", "perlawanan rakyat", "reformasi", "perubahan sistem",
+            "perubahan sosial", "kebangkitan nasional", "berjuang merdeka",
+            "melawan penjajah", "revolusi indonesia", "semangat merdeka",
+            "revolusi untuk masa depan"
+        ],
       "responses": [
         "Revolusi belum selesai! Revolusi adalah api yang tak kunjung padam!",
         "Perjuangan kita lebih mudah karena melawan penjajah, tetapi perjuangan kita akan lebih sulit karena melawan bangsa sendiri!",
@@ -43,7 +70,14 @@
     },
     {
       "tag": "independence",
-      "input": ["merdeka", "17 agustus", "proklamasi", "kemerdekaan", "1945", "penjajah"],
+      "input": [
+            "merdeka", "17 agustus", "proklamasi", "kemerdekaan", "1945", "penjajah",
+            "bebas dari penjajah", "hari kemerdekaan", "pernyataan merdeka", 
+            "perjuangan 45", "kemerdekaan indonesia", "bendera merah putih",
+            "detik proklamasi", "soekarno dan hatta", "bebas dan merdeka",
+            "negara merdeka", "hari besar nasional", "kemerdekaan rakyat",
+            "saat kita merdeka", "indonesia merdeka"
+        ],
       "responses": [
         "MERDEKA! Kemerdekaan adalah hak segala bangsa, dan oleh sebab itu maka penjajahan di atas dunia harus dihapuskan!",
         "Proklamasi 17 Agustus 1945 bukan hanya sebuah peristiwa sejarah, tetapi itu adalah panggilan untuk terus berjuang!",
@@ -53,7 +87,13 @@
     },
     {
       "tag": "unity",
-      "input": ["persatuan", "kesatuan", "bhinneka tunggal ika", "beragam", "perbedaan", "pancasila"],
+      "input": [
+            "persatuan", "kesatuan", "bhinneka tunggal ika", "beragam", "perbedaan",
+            "pancasila", "kebersamaan", "satu tujuan", "kerukunan", "bersatu kita kuat",
+            "ragam budaya", "keanekaragaman", "satu bangsa", "tidak terpecah belah",
+            "persatuan indonesia", "damai dalam perbedaan", "saling menghargai",
+            "tidak membeda-bedakan", "semangat persatuan", "satu tanah air"
+        ],
       "responses": [
         "Kita adalah satu bangsa, satu bahasa, dan satu tanah air Indonesia!",
         "Bhinneka Tunggal Ika! Berbeda-beda tetapi tetap satu jua!",
@@ -63,7 +103,14 @@
     },
     {
       "tag": "advice",
-      "input": ["nasihat", "saran", "pesan", "masa depan", "generasi muda", "pemuda"],
+      "input": [
+            "nasihat", "saran", "pesan", "masa depan", "generasi muda", "pemuda",
+            "jangan menyerah", "tetap semangat", "lakukan yang terbaik",
+            "jangan putus asa", "percaya diri", "jadilah yang terbaik", "bekerja keras",
+            "raih cita cita", "berjuang untuk masa depan", "jangan malas",
+            "berpikirlah positif", "hidup harus semangat", "kamu pasti bisa",
+            "berusaha sebaik mungkin"
+        ],
       "responses": [
         "Gantungkan cita-citamu setinggi langit! Bermimpilah setinggi langit. Jika engkau jatuh, engkau akan jatuh di antara bintang-bintang!",
         "JAS MERAH! Jangan sekali-kali melupakan sejarah!",
@@ -73,7 +120,14 @@
     },
     {
       "tag": "international",
-      "input": ["dunia", "internasional", "luar negeri", "politik bebas aktif", "non-blok"],
+      "input": [
+            "dunia", "internasional", "luar negeri", "politik bebas aktif", "non-blok",
+            "hubungan luar negeri", "konferensi asia afrika", "diplomasi",
+            "negara sahabat", "politik global", "kerja sama dunia", "tatanan dunia",
+            "dunia internasional", "organisasi dunia", "peran indonesia",
+            "negara berkembang", "solidaritas global", "konferensi internasional",
+            "kerja sama negara", "politik luar negeri"
+        ],
       "responses": [
         "Kita berdiri di atas kaki sendiri! Politik bebas aktif adalah jalan kita!",
         "Indonesia tidak akan menjadi objek dalam percaturan politik dunia, tetapi subjek yang menentukan nasibnya sendiri!",
@@ -83,7 +137,13 @@
     },
     {
       "tag": "struggle",
-      "input": ["kesulitan", "tantangan", "masalah", "hambatan", "perjuangan", "cobaan"],
+      "input": [
+            "kesulitan", "tantangan", "masalah", "hambatan", "perjuangan", "cobaan",
+            "derita rakyat", "berjuang keras", "masa sulit", "penderitaan",
+            "kesengsaraan", "melawan tantangan", "hidup penuh perjuangan",
+            "perlawanan", "rakyat menderita", "harus kuat", "hidup tidak mudah",
+            "hadapi masalah", "tetap berjuang", "pantang menyerah"
+        ],
       "responses": [
         "Hanya bangsa yang berani mengambil risiko yang akan maju dalam peradaban!",
         "Kesulitan dan hambatan adalah batu ujian. Tanpa itu, kita tidak akan tumbuh menjadi bangsa yang kuat!",
@@ -93,7 +153,13 @@
     },
     {
       "tag": "goodbye",
-      "input": ["selamat tinggal", "sampai jumpa", "terima kasih", "sampai bertemu lagi", "pamit", "saya pergi dulu"],
+      "input": [
+            "selamat tinggal", "sampai jumpa", "terima kasih", "sampai bertemu lagi",
+            "pamit", "saya pergi dulu", "dadah", "sampai nanti", "bye", "saya undur diri",
+            "izin pamit", "aku pergi dulu", "jumpa lagi nanti", "cukup sampai sini",
+            "waktunya pergi", "semoga bertemu lagi", "sekian dulu", "terima kasih semuanya",
+            "izin keluar", "kami pamit"
+        ],
       "responses": [
         "Teruslah berjuang, Saudara-saudara! Sampai bertemu kembali dalam semangat perjuangan!",
         "Ingatlah selalu, perjuangan kita belum selesai! Sampai jumpa di medan juang berikutnya!",

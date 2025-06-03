@@ -1,12 +1,13 @@
 <html>
   <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
-    <title>Graph</title>
+    <title>Test Saved Model</title>
   </head>
   <body>
     <script>
       const responses = {};
       let classLabels;
+      let maxLen;
 
       // Pad sequences to ensure consistent input shape
       function padSequences(
@@ -37,20 +38,22 @@
 
       async function init() {
         let model = await tf.loadGraphModel(
-          "http://127.0.0.1:5500/tfjs_saved_model/model.json"
+          `${window.location.origin}/tfjs_saved_model/model.json`
         );
+        maxLen = model.inputs[0].shape[1];
         console.log("Inputs:", model.inputs);
         console.log("Outputs:", model.outputs);
+        console.log("maxLen: ", maxLen);
 
         // Lihat input dan output
 
         // Memanggil word_index
         const word_indexjson = await fetch(
-          "http://127.0.0.1:5500/tfjs_saved_model/word_index.json"
+          `${window.location.origin}/tfjs_saved_model/word_index.json`
         );
         let word_index = await word_indexjson.json();
 
-        const response = await fetch("http://127.0.0.1:5500/content.json");
+        const response = await fetch(`${window.location.origin}/content.json`);
         const data = await response.json();
 
         let labels = new Set();
@@ -64,7 +67,7 @@
 
         // anda siapa [[0 3 2]] whoami: 0.94
         // Kamu: sampai jumpa (10) goodbye: 0.79 [[ 0 15 71]]
-        const inputText = "sampai jumpa";
+        const inputText = "apa kabar anak anak yang terlantar";
         console.log("Input Text: ", inputText);
 
         // Preprocess input
@@ -76,14 +79,17 @@
             return word_index[word] || 0;
           });
         });
-        console.log("Preprocess Text Sequences: ", textSequences);
+        console.log("Preprocess Text Sequences: ", textSequences[0]);
 
         // Pad sequences to match model's expected input shape (-1 batchSize, 3)
-        const paddedSequences = padSequences(textSequences, 3, "pre");
+        const paddedSequences = padSequences(textSequences, maxLen, "pre");
         console.log("Padded Sequences: ", paddedSequences[0]);
 
-        const inputTensor = tf.tensor2d(paddedSequences, [1, 3]);
-        const result = model.predict({ Identity: inputTensor });
+        const inputTensor = tf.tensor2d(paddedSequences, [1, maxLen]);
+        inputTensor.print();
+        console.log("inputTensor :", inputTensor);
+
+        const result = model.predict({Identity: inputTensor});
 
         const probabilities = result.softmax();
         const outputData = await probabilities.data();

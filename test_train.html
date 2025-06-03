@@ -1,0 +1,192 @@
+<!-- UJI COBA TFJS MODEL LANGSUNG -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TFJS Model Inline</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const maxLen = 5;
+      const vocab = {};
+      let vocabIndex = 1; // Mulai dari 1, karena 0 untuk padding
+
+      const texts = [
+        // 0 - sapaan
+        "hai",
+        "halo",
+        "selamat pagi",
+
+        // 1 - pertanyaan umum
+        "apa kabar",
+        "kamu siapa",
+        "jam berapa sekarang",
+
+        // 2 - sampai jumpa
+        "dadah",
+        "sampai nanti",
+        "selamat tinggal",
+
+        // 3 - terima kasih
+        "terima kasih",
+        "makasih",
+        "thanks",
+
+        // 4 - permintaan maaf
+        "maaf ya",
+        "sori",
+        "mohon maaf",
+
+        // 5 - pujian
+        "kerja bagus",
+        "hebat kamu",
+        "keren banget",
+
+        // 6 - perintah
+        "tolong ambilkan air",
+        "buka pintu",
+        "berikan saya buku itu",
+
+        // 7 - persetujuan
+        "iya",
+        "betul",
+        "setuju",
+
+        // 8 - penolakan
+        "tidak",
+        "nggak",
+        "aku tidak setuju",
+
+        // 9 - ekspresi senang
+        "senang sekali",
+        "aku bahagia",
+        "hore",
+      ];
+
+      const labels = [
+        0,
+        0,
+        0, // sapaan
+        1,
+        1,
+        1, // pertanyaan umum
+        2,
+        2,
+        2, // sampai jumpa
+        3,
+        3,
+        3, // terima kasih
+        4,
+        4,
+        4, // permintaan maaf
+        5,
+        5,
+        5, // pujian
+        6,
+        6,
+        6, // perintah
+        7,
+        7,
+        7, // persetujuan
+        8,
+        8,
+        8, // penolakan
+        9,
+        9,
+        9, // ekspresi senang
+      ];
+
+      // Tokenizer sederhana
+      function tokenize(text) {
+        return text
+          .toLowerCase()
+          .split(" ")
+          .map((word) => {
+            if (!vocab[word]) {
+              vocab[word] = vocabIndex++;
+            }
+            return vocab[word];
+          });
+      }
+
+      function padSequence(seq, maxLen) {
+        while (seq.length < maxLen) {
+          seq.push(0); // padding
+        }
+        return seq.slice(0, maxLen); // truncate if longer
+      }
+
+      // Tokenisasi dan padding
+      const sequences = texts.map((t) => padSequence(tokenize(t), maxLen));
+      const xs = tf.tensor2d(sequences);
+      const ys = tf.tensor1d(labels, "int32");
+      const ysOneHot = tf.oneHot(ys, 10);
+
+      // Buat model
+      const model = tf.sequential();
+      model.add(
+        tf.layers.embedding({
+          inputDim: vocabIndex,
+          outputDim: 8,
+          inputLength: maxLen,
+        })
+      );
+      model.add(tf.layers.flatten());
+      model.add(tf.layers.dense({ units: 16, activation: "relu" }));
+      model.add(tf.layers.dense({ units: 10, activation: "softmax" }));
+
+      model.compile({
+        loss: "categoricalCrossentropy",
+        optimizer: "adam",
+        metrics: ["accuracy"],
+      });
+
+      // Training
+      async function trainModel() {
+        await model.fit(xs, ysOneHot, {
+          epochs: 100,
+          callbacks: {
+            onEpochEnd: (epoch, logs) => {
+              console.log(
+                `Epoch ${epoch + 1}: loss = ${logs.loss.toFixed(
+                  4
+                )}, acc = ${logs.acc.toFixed(4)}`
+              );
+            },
+          },
+        });
+
+        console.log("model.outputs: ", model.outputs);
+
+        // Tes prediksi
+        const testText = "anda siapa ya";
+        console.log([padSequence(tokenize(testText), maxLen)]);
+        const testSeq = tf.tensor2d([padSequence(tokenize(testText), maxLen)]);
+        // const testSeq = tf.tensor2d([[16, 8, 17, 0, 0]]); // the correct
+        // const testSeq = tf.tensor2d([[16, 8, 17, 0, 0]]);
+        console.log("testText: ", testText); // Tensor [[16, 8, 17, 0, 0],]
+        testSeq.print();
+        const prediction = model.predict(testSeq);
+        prediction.print();
+
+        const classIndex = prediction.argMax(-1).dataSync()[0];
+        const classes = [
+          "sapaan", // 0
+          "pertanyaan", // 1
+          "sampai jumpa", // 2
+          "terima kasih", // 3
+          "permintaan maaf", // 4
+          "pujian", // 5
+          "perintah", // 6
+          "persetujuan", // 7
+          "penolakan", // 8
+          "ekspresi senang", // 9
+        ];
+
+        console.log(`Prediksi: ${classes[classIndex]}`);
+      }
+
+      trainModel();
+    </script>
+  </body>
+</html>

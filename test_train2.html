@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <title>Test train 2</title>
+  </head>
+  <body>
+    <script>
+      // Data contoh (singkat dari dataset kamu)
+      const data = [
+        { input: "selamat pagi", tag: "greeting" },
+        { input: "hai bung karno", tag: "greeting" },
+        { input: "halo presiden", tag: "greeting" },
+        { input: "siapa kamu", tag: "whoami" },
+        { input: "apa itu nasionalisme", tag: "nationalism" },
+        { input: "kenapa kita harus merdeka", tag: "independence" },
+        { input: "kenapa harus revolusi", tag: "revolution" },
+        { input: "bagaimana menjaga persatuan", tag: "unity" },
+        { input: "apa pesan untuk pemuda", tag: "advice" },
+        { input: "sampai jumpa", tag: "goodbye" },
+      ];
+
+      // Mapping tag ke angka
+      // const labelMap = {
+      //   greeting: 0,
+      //   whoami: 1,
+      //   nationalism: 2,
+      //   independence: 3,
+      //   revolution: 4,
+      //   unity: 5,
+      //   advice: 6,
+      //   goodbye: 7
+      // };
+
+      const classes = [
+        "greeting",
+        "whoami",
+        "nationalism",
+        "independence",
+        "revolution",
+      ];
+      const classMap = {};
+      classes.forEach((tag, i) => (classMap[tag] = i));
+
+      // Ambil data hanya untuk 5 kelas ini
+      const filteredData = data.filter((d) => classes.includes(d.tag));
+
+      // 1. Tokenisasi sederhana — buat kamus kata dan ubah teks jadi sequence angka
+      const tokenizer = (() => {
+        const wordIndex = {};
+        let index = 1; // mulai dari 1 (0 untuk padding)
+
+        return {
+          fitOnTexts(texts) {
+            texts.forEach((text) => {
+              text
+                .toLowerCase()
+                .split(" ")
+                .forEach((word) => {
+                  if (!(word in wordIndex)) {
+                    wordIndex[word] = index++;
+                  }
+                });
+            });
+          },
+          textsToSequences(texts) {
+            return texts.map((text) =>
+              text
+                .toLowerCase()
+                .split(" ")
+                .map((word) => wordIndex[word] || 0)
+            );
+          },
+          getWordIndex() {
+            return wordIndex;
+          },
+        };
+      })();
+
+      tokenizer.fitOnTexts(filteredData.map((d) => d.input));
+      const sequences = tokenizer.textsToSequences(
+        filteredData.map((d) => d.input)
+      );
+
+      // 2. Padding sequences ke panjang max
+      const maxLen = Math.max(...sequences.map((seq) => seq.length));
+
+      function padSequences(sequences, maxLen) {
+        return sequences.map((seq) => {
+          if (seq.length < maxLen) {
+            return [...seq, ...Array(maxLen - seq.length).fill(0)];
+          } else {
+            return seq.slice(0, maxLen);
+          }
+        });
+      }
+
+      const paddedSequences = padSequences(sequences, maxLen);
+
+      // 3. Encode label ke integer
+      const labels = filteredData.map((d) => classMap[d.tag]);
+
+      // 4. Convert ke tensor
+      const xs = tf.tensor2d(paddedSequences, [paddedSequences.length, maxLen]);
+      console.log("xs dtype:", xs.dtype); // harusnya "int32"
+      console.log("xs shape:", xs.shape); // [jumlah_data, maxLen]
+      const ys = tf.tensor1d(labels, "float32");
+
+      // 5. Buat model
+      const model = tf.sequential();
+      model.add(
+        tf.layers.embedding({
+          inputDim: Object.keys(tokenizer.getWordIndex()).length + 1,
+          outputDim: 8,
+          inputLength: maxLen,
+        })
+      );
+      model.add(tf.layers.flatten());
+      model.add(tf.layers.dense({ units: 16, activation: "relu" }));
+      model.add(
+        tf.layers.dense({ units: classes.length, activation: "softmax" })
+      );
+
+      model.compile({
+        optimizer: "adam",
+        loss: "sparseCategoricalCrossentropy",
+        metrics: ["accuracy"],
+      });
+
+      // 6. Training
+      (async () => {
+        await model.fit(xs, ys, {
+          epochs: 50,
+          validationSplit: 0.2,
+          shuffle: true,
+          callbacks: tf.callbacks.earlyStopping({
+            monitor: "val_loss",
+            patience: 5,
+          }),
+        });
+
+        console.log("Training selesai!");
+
+        // Contoh prediksi
+        const testText = "selamat pagi bung karno";
+        const seqTest = tokenizer.textsToSequences([testText]);
+        const paddedTest = padSequences(seqTest, maxLen);
+        const inputTest = tf.tensor2d(paddedTest, [1, maxLen]);
+
+        const prediction = model.predict(inputTest);
+        prediction.print();
+
+        const predIndex = prediction.argMax(-1).dataSync()[0];
+        console.log(`Prediksi kelas: ${classes[predIndex]}`);
+      })();
+    </script>
+  </body>
+</html>
