@@ -29,7 +29,7 @@
 ```
 
 ## Issue
-Anomali Perbedaan Model latihan-tfjs dan model1:
+Anomalis Perbedaan Model latihan-tfjs dan model1:
 - latihan bisa model.predict(input) tanpa perlu inisiasi tambahan, sedangkan model1 perlu model.predict({ Identity: inputTensor });
 - latihan dan model1 sama-sama tidak punya DType dan Shape OutputLayer
 - model1 hanya punya 3 neuron probalitas output (mungkin ini mengikuti input)
