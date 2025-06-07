@@ -1,1 +1,6 @@
 github-token.txt
+.env
+saved_model_hatta/
+saved_model_soekarno/
+histotalk-model1-tfjs/
+etl/
