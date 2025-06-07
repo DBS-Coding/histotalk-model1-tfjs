@@ -5,8 +5,9 @@
   </head>
   <body>
     <script>
-      const responses = {};
-      let classLabels;
+      let responses = {};
+      let possibleResponses = [];
+      let classLabels = [];
       let maxLen;
 
       // Pad sequences to ensure consistent input shape
@@ -38,7 +39,7 @@
 
       async function init() {
         let model = await tf.loadGraphModel(
-          `${window.location.origin}/tfjs_saved_model/model.json`
+          `${window.location.origin}/tfjs_saved_model/input-4/model.json`
         );
         maxLen = model.inputs[0].shape[1];
         console.log("Inputs:", model.inputs);
@@ -49,25 +50,22 @@
 
         // Memanggil word_index
         const word_indexjson = await fetch(
-          `${window.location.origin}/tfjs_saved_model/word_index.json`
+          `${window.location.origin}/tfjs_saved_model/input-4/word_index.json`
         );
         let word_index = await word_indexjson.json();
 
-        const response = await fetch(`${window.location.origin}/content.json`);
-        const data = await response.json();
+        const contentSoekarnoResponse = await fetch(`${window.location.origin}/tfjs_saved_model/input-4/content.json`);
 
-        let labels = new Set();
-        data.intents.forEach((intent) => {
-          responses[intent.tag] = intent.responses;
-          labels.add(intent.tag);
-        });
-        classLabels = [...labels];
+        responses = await contentSoekarnoResponse.json();
+        // ambil keys jadi array
+        classLabels = Object.keys(responses);
+
         console.log("classLabels Loaded: ", classLabels);
         console.log("Responses Loaded: ", responses);
 
         // anda siapa [[0 3 2]] whoami: 0.94
         // Kamu: sampai jumpa (10) goodbye: 0.79 [[ 0 15 71]]
-        const inputText = "apa kabar anak anak yang terlantar";
+        const inputText = "halo pak";
         console.log("Input Text: ", inputText);
 
         // Preprocess input
@@ -87,56 +85,61 @@
 
         const inputTensor = tf.tensor2d(paddedSequences, [1, maxLen]);
         inputTensor.print();
-        console.log("inputTensor :", inputTensor);
+        // console.log("inputTensor :", inputTensor);
 
-        const result = model.predict({Identity: inputTensor});
+        const result = model.predict(inputTensor);
+        // const result = model.predict({Identity: inputTensor});
 
-        const probabilities = result.softmax();
-        const outputData = await probabilities.data();
-        const outputArray = Array.from(outputData);
+        // Dapatkan nilai prediksi sebagai array
+        result.array().then(predArray => {
+          const probs = predArray[0]; // ambil array [prob_0, prob_1, prob_2]
 
-        console.log("=== DEBUG INFO ===");
-        console.log("Jumlah output yang diprediksi:", outputArray.length);
-        console.log("Expected classes: 10");
-
-        // print array prediksi untuk setiap target kelas
-        console.log("Array prediksi probabilitas untuk setiap kelas:");
-        console.log(outputArray);
-
-        // print prediksi per kelas
-        console.log("\nPrediksi per kelas:");
-        outputArray.forEach((prob, index) => {
-          const className = classLabels[index] || `Class_${index}`;
-          console.log(`${className}: ${prob.toFixed(4)}`);
+          probs.forEach((prob, i) => {
+            const label = classLabels[i];
+            console.log(`${label}: ${prob.toFixed(4)}`);
+          });
         });
 
-        // // (opsional) ambil nilai tertinggi:
-        const prediction = result.argMax(-1);
-        prediction.print(); // akan menampilkan index kelas prediksi (0-9)
+        // const probabilities = result.softmax();
+        // const outputData = await probabilities.data();
+        // const outputArray = Array.from(outputData);
 
-        // Menggunakan softmax untuk mendapatkan probabilitas setiap kelas
-        const probabilitas = result.softmax();
+        // console.log("=== DEBUG INFO ===");
+        // console.log("Jumlah output yang diprediksi:", outputArray.length);
+        // console.log("Expected classes: 10");
 
-        // Ambil nilai tertinggi dan probabilitasnya
-        const predictionIndex = probabilitas.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
-        const predictionValue = probabilitas.max().dataSync()[0]; // Probabilitas tertinggi
+        // // print array prediksi untuk setiap target kelas
+        // // console.log("Array prediksi probabilitas untuk setiap kelas:");
+        // // console.log(outputArray);
 
-        console.log(`Prediksi kelas: ${predictionIndex}`);
-        console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+        // // print prediksi per kelas
+        // console.log("\nPrediksi per kelas:");
+        // outputArray.forEach((prob, index) => {
+        //   const className = classLabels[index] || `Class_${index}`;
+        //   console.log(`${className}: ${prob.toFixed(4)}`);
+        // });
 
-        // Ambil indeks prediksi dari model
-        const predictedTag = classLabels[predictionIndex]; // nama tag sesuai indeks
+        // // // (opsional) ambil nilai tertinggi:
+        // const prediction = result.argMax(-1);
+        // prediction.print(); // akan menampilkan index kelas prediksi (0-9)
 
-        // Ambil daftar respons untuk tag tersebut
-        const possibleResponses = responses[predictedTag] || [];
+        // // Menggunakan softmax untuk mendapatkan probabilitas setiap kelas
+        // const probabilitas = result.softmax();
 
-        // Pilih salah satu response secara acak
-        const randomResponse =
-          possibleResponses[
-            Math.floor(Math.random() * possibleResponses.length)
-          ];
+        // // Ambil nilai tertinggi dan probabilitasnya
+        // const predictionIndex = probabilitas.argMax(-1).dataSync()[0]; // Indeks kelas tertinggi
+        // const predictionValue = probabilitas.max().dataSync()[0]; // Probabilitas tertinggi
 
-        console.log(`Respon: ${randomResponse}`);
+        // console.log(`Prediksi kelas: [${predictionIndex}] ${classLabels[predictionIndex]}`);
+        // console.log(`Kemiripan (%) : ${(predictionValue * 100).toFixed(2)}%`);
+
+        // // Ambil indeks prediksi dari model
+        // const predictedTag = classLabels[predictionIndex]; // nama tag sesuai indeks
+
+        // possibleResponses = responses[predictedTag] || [];
+        // const randomResponse = possibleResponses[Math.floor(Math.random() * possibleResponses.length)];
+
+        // console.log(`Respon: ${randomResponse}`);
       }
       
       init();
