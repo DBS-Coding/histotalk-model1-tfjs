@@ -80,7 +80,7 @@
         console.log("Preprocess Text Sequences: ", textSequences[0]);
 
         // Pad sequences to match model's expected input shape (-1 batchSize, 3)
-        const paddedSequences = padSequences(textSequences, maxLen, "pre");
+      const paddedSequences = padSequences(textSequences, maxLen, "pre");
         console.log("Padded Sequences: ", paddedSequences[0]);
 
         const inputTensor = tf.tensor2d(paddedSequences, [1, maxLen]);

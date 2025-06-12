@@ -1,6 +1,18 @@
-# How To Use
+
+# Model1-TFJS
+<img style="" src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" />
+
+What about this repo?
+- Pengembangan Tensorflow model Text Classification yang di convert ke tfjs
+- Penyimpanan Model hasil Push ETL dan tempat akses lewat Github Page (root adalah folder `tfjs_saved_model/`)
+
+## ETL Process
+- Dikelola di repo [histotalk-model1-etl](https://github.com/DBS-Coding/histotalk-model1-etl)
+- 
+
+## How to use
 - Jalankan index.html pakai live server
-- Kode log ada di developer mode
+- Lihat kode log di developer mode browser
 
 ## Using predict.js
 - pakai file `predict.js` dan folder `tfjs_saved_model`
@@ -28,14 +40,12 @@
 }
 ```
 
-## Issue
+## Old Issue
 Anomalis Perbedaan Model latihan-tfjs dan model1:
 - latihan bisa model.predict(input) tanpa perlu inisiasi tambahan, sedangkan model1 perlu model.predict({ Identity: inputTensor });
 - latihan dan model1 sama-sama tidak punya DType dan Shape OutputLayer
 - model1 hanya punya 3 neuron probalitas output (mungkin ini mengikuti input)
-
-## EROR LOG
-- tfjsmodel_V3
+```bash
     - tfjs version 2.18.0
     - tfjs version: v4.22.0
 model.executeAsync()
@@ -49,3 +59,4 @@ script.js:84 Error during prediction: Error: Cannot compute the outputs [Identit
     at Generator.next (tf.min.js:17:2463)
     at u (tf.min.js:17:8324)
     at o (tf.min.js:17:8527)
+```
