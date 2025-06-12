@@ -1,77 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Classification with TensorFlow.js</title>
-    <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #userInput {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            display: none;
-            background-color: #f9f9f9;
-        }
-        #loading {
-            display: none;
-            margin-top: 15px;
-            font-style: italic;
-            color: #666;
-        }
-        .model-status {
-            margin-bottom: 20px;
-            color: #666;
-        }
-        pre {
-            background-color: #f5f5f5;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-    </style>
-</head>
-<body>
-    <h1>Text Classification Model</h1>
-    
-    <div class="model-status" id="modelStatus">Model status: Loading...</div>
-    <p>contoh pilihan:  "anda siapa" <pre>Matrix: [[0 3 2]], Tag: whoami [0.94]</pre></p>
-    
-    <form onsubmit="event.preventDefault(); predict();">
-        <input id="userInput" placeholder="Enter your text here..."></input>
-        <button type="submit">Predict</button>
-        <div id="loading"></div>
-    </form>
-    
-    <div id="result"></div>
-    <script src="script.js"></script>
-</body>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+    <title>Test Saved Model (Uji Akurasi Tanpa UI)</title>
+  </head>
+  <body>
+    <script>
+      let responses = {};
+      let possibleResponses = [];
+      let classLabels = [];
+      let maxLen;
+      const npc = 'hatta';
+
+      // Pad sequences to ensure consistent input shape
+      function padSequences(
+        sequences,
+        maxlen = 3,
+        padding = "post",
+        truncating = "post"
+      ) {
+        return sequences.map((seq) => {
+          if (seq.length > maxlen) {
+            // Truncate
+            return truncating === "pre"
+              ? seq.slice(seq.length - maxlen)
+              : seq.slice(0, maxlen);
+          }
+
+          // Pad with zeros
+          const padded = new Array(maxlen).fill(0);
+          const offset = padding === "pre" ? maxlen - seq.length : 0;
+
+          for (let i = 0; i < seq.length; i++) {
+            padded[offset + i] = seq[i];
+          }
+
+          return padded;
+        });
+      }
+
+      async function init() {
+        let model = await tf.loadGraphModel(
+          `${window.location.origin}/tfjs_saved_model/${npc}/model.json`
+        );
+        maxLen = model.inputs[0].shape[1];
+        console.log("Inputs:", model.inputs);
+        console.log("Outputs:", model.outputs);
+        console.log("maxLen: ", maxLen);
+
+        // Memanggil word_index
+        const word_indexjson = await fetch(
+          `${window.location.origin}/tfjs_saved_model/${npc}/word_index.json`
+        );
+        let word_index = await word_indexjson.json();
+
+        const contentSoekarnoResponse = await fetch(
+          `${window.location.origin}/tfjs_saved_model/${npc}/content.json`
+        );
+
+        responses = await contentSoekarnoResponse.json();
+        // ambil keys jadi array
+        classLabels = Object.keys(responses);
+
+        console.log("classLabels Loaded: ", classLabels);
+        // classLabels Loaded:  (10) ['advice', 'goodbye', 'greeting', 'independence', 'international', 'nationalism', 'revolution', 'struggle', 'unity', 'whoami']
+        console.log("Responses Loaded: ", responses);
+        // Responses Loaded:
+        // {advice: Array(4), goodbye: Array(4), greeting: Array(4), independence: Array(4), international: Array(4), …}
+        // advice :(4) ['Belajarlah terus-menerus, ...]
+
+        // anda siapa [[0 3 2]] whoami: 0.94
+        // Kamu: sampai jumpa (10) goodbye: 0.79 [[ 0 15 71]]
+        const inputText = "halo pak";
+        console.log("Input Text: ", inputText);
+
+        // Preprocess input
+        const preprocess = inputText.toLowerCase().replace(/[^\w\s]/gi, "");
+        const textSequences = [preprocess].map((text) => {
+          const words = text.split(" ");
+          return words.map((word) => {
+            // Get the word index, or use 0 for unknown words
+            return word_index[word] || 0;
+          });
+        });
+        console.log("Preprocess Text Sequences: ", textSequences[0]);
+
+        // Pad sequences to match model's expected input shape (-1 batchSize, 3)
+        const paddedSequences = padSequences(textSequences, maxLen, "pre");
+        console.log("Padded Sequences: ", paddedSequences[0]);
+
+        const inputTensor = tf.tensor2d(paddedSequences, [1, maxLen]);
+        inputTensor.print();
+        // console.log("inputTensor :", inputTensor);
+
+        const result = model.predict(inputTensor);
+        // const result = model.predict({Identity: inputTensor});
+
+        // Dapatkan nilai prediksi sebagai array
+        result.array().then((predArray) => {
+          const probs = predArray[0]; // ambil array [prob_0, prob_1, prob_2]
+
+          probs.forEach((prob, i) => {
+            const label = classLabels[i];
+            console.log(`${label}: ${prob.toFixed(4)}`);
+          });
+
+          // Cari index dengan probabilitas tertinggi
+          const predictionIndex = probs.indexOf(Math.max(...probs));
+
+          // Tampilkan prediksi kelas
+          console.log(
+            `Prediksi kelas [Hatta]: [${predictionIndex}] ${classLabels[predictionIndex]}`
+          );
+        });
+      }
+
+      init();
+    </script>
+  </body>
 </html>

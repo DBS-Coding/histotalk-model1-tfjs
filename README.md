@@ -1,50 +1,65 @@
 
+<p align="center">
+  <img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" />
+</p>
+
 # Model1-TFJS
-<img style="" src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" />
 
 What about this repo?
 - Pengembangan Tensorflow model Text Classification yang di convert ke tfjs
 - Penyimpanan Model hasil Push ETL dan tempat akses lewat Github Page (root adalah folder `tfjs_saved_model/`)
 
+Struktur file:
+```
+tfjs_saved_model/
+├── hatta/
+│   ├── model.json
+│   ├── group1-shard1of1.bin
+│   ├── word_index.json
+│   └── content.json
+├── soekarno/
+│   ├── model.json
+│   ├── group1-shard1of1.bin
+│   ├── word_index.json
+│   └── content.json
+index.html
+notebook.ipynb
+```
+- `tfjs_saved_model/` tempat menyimpan model
+- `index.html` pengujian model
+- `notebook.ipynb` pengembangan model text classifikasi. 
+- `developer note.txt` Catatan karena notebook tidak bisa run di local, ada kendala version tensorflow dan tfjs. Tapi anehnya di GColab aman, padahal saya mengikuti versi di itu, mungkin karena Conda hanya bisa pakai versi Python 3.11.0 (Local) bukan 3.11.13 (G Colab)
+```
+Model stabil sekarang adalah FeedForward Neural Network (FFNN) menggunakan GlobalAveragePooling1D
+```
 ## ETL Process
 - Dikelola di repo [histotalk-model1-etl](https://github.com/DBS-Coding/histotalk-model1-etl)
-- 
+- Model yang diproses sekarang adalah `tfjs_saved_model/soekarno/` & `tfjs_saved_model/hatta/` 
 
 ## How to use
+- gunakan versi [Google Colab](https://colab.research.google.com/drive/1-TAnRcF9nQDfF3vKAwQbQxohNvbiOU6P?usp=sharing) [kemungkinan local tidak bisa run ☠️]
 - Jalankan index.html pakai live server
 - Lihat kode log di developer mode browser
+- bandingkan hasil kedua versi (Pyhton & Js)
 
-## Using predict.js
-- pakai file `predict.js` dan folder `tfjs_saved_model`
-- contoh pemakaian di `predict.html`
-```html
-<script src="predict.js"></script>
-    <script>
-      (async () => {
-        const result = await predictIntent("anda siapa");
-        console.log(result);
-      })();
-    </script>
+## Current Issue
+Code sudah fix, prediksi TFJS yang punya class sama dengan yang di GColab sudah **pernah** tercapai. 
+Namun, kode di proses ETL malah menghasilkan skema word index berbeda.
 ```
-- contoh output:
-```json
-{
-  "probabilities": [
-    { "label": "greeting", "confidence": 0.0032 },
-    { "label": "whoami", "confidence": 0.9365 },
-    ...
-  ],
-  "predictedClass": "whoami",
-  "confidence": 0.9365,
-  "response": "Aku Soekarno, Proklamator Indonesia!"
-}
+- **Input**: "halo pak"
+- Padding Sequences
+  - Versi TF: [[59, 30, 0, 0]]
+  - Versi TFJS (ETL): [[0, 0, 27, 15]] 
 ```
 
 ## Old Issue
+Asumsi: karena versi model LSTM bermasalah, sekarang saya pakai 
+
 Anomalis Perbedaan Model latihan-tfjs dan model1:
 - latihan bisa model.predict(input) tanpa perlu inisiasi tambahan, sedangkan model1 perlu model.predict({ Identity: inputTensor });
 - latihan dan model1 sama-sama tidak punya DType dan Shape OutputLayer
 - model1 hanya punya 3 neuron probalitas output (mungkin ini mengikuti input)
+
 ```bash
     - tfjs version 2.18.0
     - tfjs version: v4.22.0
